@@ -1,0 +1,18 @@
+{
+  "name": "@local/dsh-runcode-mode",
+  "version": "1.0.0",
+  "private": true,
+  "description": "为 DSH 增加一个「无提示词、只有 run_code」的极简 Agent 模式（preset id: runcode）。",
+  "type": "module",
+  "main": "lib/index.js",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md"
+  ]
+}

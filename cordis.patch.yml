@@ -1,0 +1,69 @@
+# dsh-runcode-mode —— 一个「无提示词、只有 run_code」的 Agent 模式
+#
+# 本文件是 bundle 补丁：向宿主平面（profile 树）插入一条 @deepseek-ai/dsh-agent-preset 行，
+# 由它向 agent-preset-registry 注册名为 `runcode` 的模式。模式的插件列表在独立作用域中挂载：
+#   - persona          : prefix '' + complete: true + includeRuntimeContext: false -> system prompt 全空（零提示词）
+#   - runcode-mode     : 本包自带的插件，剥离插件注入的合成消息（记忆块/时间上下文等）
+#   - tool-presentation: mode ptc -> 模型只看到 run_code 一个工具 schema
+#   - persistent-shell : 持久 Shell（pty + bash/pwsh 持久工具，按平台启用）
+#   - filesystem       : 文件系统（fs-local + str-replace-editor）
+#
+# 结果：模型侧没有任何 system 提示词，工具集只有 run_code；run_code 内部可调用
+# Shell 与文件编辑工具（通过 SDK 命名空间绑定，未声明的名字调用会失败）。
+- insert:
+    - id: preset-runcode
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: runcode
+        name: 无提示词 run_code 模式
+        description: 零系统提示词，模型只看到一个 run_code 工具（PTC 呈现）；程序内可调用持久 Shell 与文件编辑工具。
+        order: 13
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: ''
+              complete: true
+              includeRuntimeContext: false
+          - id: runcode-mode
+            name: '@local/dsh-runcode-mode'
+          - id: tool-presentation
+            name: '@deepseek-ai/dsh-agent-tool-presentation'
+            config:
+              mode: ptc
+          - id: persistent-shell
+            name: cordis:group
+            group: true
+            isolate:
+              terminals: true
+            config:
+              - id: pty
+                name: '@deepseek-ai/dsh-terminal'
+              - id: terminal-bash
+                name: '@deepseek-ai/dsh-terminal-bash'
+                disabled: !!js process.platform === 'win32'
+                config:
+                  timeoutMs: 300000
+              - id: persistent-bash
+                name: '@deepseek-ai/dsh-tool-bash-persistent'
+                disabled: !!js process.platform === 'win32'
+                config:
+                  timeoutMs: 300000
+              - id: terminal-pwsh
+                name: '@deepseek-ai/dsh-terminal-bash'
+                disabled: !!js process.platform !== 'win32'
+                config:
+                  shellDialect: pwsh
+                  timeoutMs: 300000
+              - id: persistent-pwsh
+                name: '@deepseek-ai/dsh-tool-pwsh-persistent'
+                disabled: !!js process.platform !== 'win32'
+                config:
+                  timeoutMs: 300000
+          # 文件编辑：直接使用宿主平面已挂载的 fs-sandbox（沙箱生效）。
+          # 不再像 legacy bare 那样用 fs-local + isolate{fs}，因为那会让 ctx.fs 缺少
+          # sandboxMode，str-replace-editor 便不会经过 sandboxPolicy（写入可绕过沙箱）。
+          - id: str-replace-editor
+            name: '@deepseek-ai/dsh-tool-str-replace-editor'
+            config:
+              maxOutputChars: 16000
