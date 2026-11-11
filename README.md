@@ -60,6 +60,8 @@ return Object.keys(tools); // 已声明的工具名（pwsh、read、write、edit
 
 ## 分发给别人 / 上传 GitHub
 
+> 仓库地址：<https://github.com/Leafyezi233/dsh-clear-runcode-mode>（已通过 SSH 推送，默认分支 `main`）
+
 推荐让使用者用 DSH 的插件命令安装，命令会把包装进 profile 的 `node_modules` 并**自动把 bundle 加进 `dsh.profile.bundles`**（`reconcileProfilePlugins` 会自动启用新 bundle 依赖）。三种方式任选：
 
 ### 方式一：发布到 npm（最省事）
@@ -78,7 +80,7 @@ return Object.keys(tools); // 已声明的工具名（pwsh、read、write、edit
 1. 把本目录推到 GitHub（见下方命令）。
 2. 使用者执行（pnpm 支持 git 依赖，`@local/` 作用域无需改名）：
    ```
-   dsh plugin --profile desktop add github:<你的用户名>/dsh-runcode-mode
+   dsh plugin --profile desktop add github:Leafyezi233/dsh-clear-runcode-mode
    ```
    如需固定版本：`github:<用户>/<仓库>#v1.0.0`。
 3. 重启桌面端选择该模式。
@@ -95,11 +97,10 @@ return Object.keys(tools); // 已声明的工具名（pwsh、read、write、edit
 
 ```bash
 cd D:/dsh工作区1/dsh-runcode-mode
-git init
+git init -b main
 git add .
-git commit -m "feat: dsh runcode mode (no system prompt, run_code only)"
-git branch -M main
-git remote add origin https://github.com/<你的用户名>/dsh-runcode-mode.git
+git commit -m "feat: dsh clear runcode mode (no system prompt, run_code only)"
+git remote add origin git@github.com:Leafyezi233/dsh-clear-runcode-mode.git
 git push -u origin main
 ```
 
@@ -121,3 +122,4 @@ git push -u origin main
 - 评审修正：① 注入过滤改为白名单（命中 `plugin:*`/`time-context` 等）；② 去掉 `fs-local`+`isolate{fs}`，改用宿主 `fs-sandbox`，使 `str-replace-editor` 经 `sandboxPolicy`（原写法可绕过沙箱）。
 - 已验证：`loadOverlayPatches` 解析出 `preset-runcode`（`id=runcode order=13`）；`entryListProblem(plugins)` 返回 `undefined`；各行 config 通过对应 schemastery 校验；`loadProfileDirectory` 中本 bundle 成功解析。
 - 未验证（需重启桌面端）：运行时实际 mount、模型侧是否只剩 `run_code`。
+- 2026-11-11 推送：仓库 <https://github.com/Leafyezi233/dsh-clear-runcode-mode>，SSH 推送成功；`git ls-remote origin` 回读 HEAD=refs/heads/main=a6fde3e。README 的安装命令与推送命令已改为真实仓库地址。
